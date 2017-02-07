@@ -10,7 +10,7 @@ NiceHash Order Updating bot for renting hashing power to mine BipCoin
 ###Sign up for NiceHash with my affiliate link:
 https://www.nicehash.com/?refby=88315
 
-Deposit BTC to your account. Get your API Id and Key to put in this script.
+Deposit BTC to your account. Get your API Id and Key to put in nicehashbot.php script.
 
 ###Add mining pools: 
 https://www.nicehash.com/index.jsp?p=managepools
