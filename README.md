@@ -15,9 +15,9 @@ Deposit BTC to your account. Get your API Id and Key to put in nicehashbot.php s
 ###Add mining pools: 
 https://www.nicehash.com/index.jsp?p=managepools
 
-EU >> host: bip.ms-pool.net.ua port: 8888 username: <BipCoin Address> password: x
+EU >> host: bip.ms-pool.net.ua port: 8888 username: \<BipCoin Address> password: x
 
-US >> host: pool.democats.org port: 45591 username: <BipCoin Address> passoword: x
+US >> host: pool.democats.org port: 45591 username: \<BipCoin Address> passoword: x
 
 ###Place Orders
 https://www.nicehash.com/index.jsp?p=orders
