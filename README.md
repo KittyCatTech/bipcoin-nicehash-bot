@@ -1,5 +1,5 @@
 # bipcoin-nicehash-bot
-NiceHash Order Updating bot for renting hashing power to mine BipCoin
+[NiceHash](https://www.nicehash.com/?refby=88315) Order Updating bot for renting hashing power to mine BipCoin
 
 ###This Script Updates Orders on NiceHash based on:
 
