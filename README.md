@@ -28,3 +28,17 @@ Add one standard order for EU hashing sever and one order for US hasing sever
 
 ###Automate
 Run script [nicehashbot.php](https://github.com/KittyCatTech/bipcoin-nicehash-bot/blob/master/nicehashbot.php) and schedule it to run every 10-15 Mins.
+
+###License:
+
+[BipCot NoGov Software License](https://github.com/KittyCatTech/bipcoin-nicehash-bot/blob/master/LICENSE)
+
+###Donations
+
+If you found this software useful please donate and let me know you appriciate my work on [twitter](http://twitter.com/KittyCatTech) or [reddit](https://www.reddit.com/user/KittyCatTech).
+
+Donations are accepted in Monero and BipCoin:
+
+XMR: 49kC7NB3iagZf2T4AhBdL84N9JaugEhvJVJDBEuMEKQSUnrx3xFoDzejpRKiSgX7V1j1im8h8xyRmNXJJSQtBtJS7F25nzs
+
+BIP: bip1WevdQxcaVYr1bRuqEsEqU4vEJ5qFtHsrWANG7hbTYyvTmvTswC8FcX6yAZ2MunWE3Fu1qLpTBVU nf7hDhWpi4BbozDmQJ1
