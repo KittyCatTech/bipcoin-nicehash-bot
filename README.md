@@ -10,7 +10,7 @@ NiceHash Order Updating bot for renting hashing power to mine BipCoin
 ###Sign up for NiceHash with my affiliate link:
 https://www.nicehash.com/?refby=88315
 
-Deposit BTC to your account. Get your API Id and Key to put in nicehashbot.php script.
+Deposit BTC to your account. Get your API Id and Key to put in [nicehashbot.php](https://github.com/KittyCatTech/bipcoin-nicehash-bot/blob/master/nicehashbot.php) script.
 
 ###Add mining pools: 
 https://www.nicehash.com/index.jsp?p=managepools
@@ -27,4 +27,4 @@ Select CryptoNight Algorithm
 Add one standard order for EU hashing sever and one order for US hasing sever
 
 ###Automate
-Run script nicehashbot.php and schedule it to run every 10-15 Mins.
+Run script [nicehashbot.php](https://github.com/KittyCatTech/bipcoin-nicehash-bot/blob/master/nicehashbot.php) and schedule it to run every 10-15 Mins.
