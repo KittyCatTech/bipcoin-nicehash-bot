@@ -116,9 +116,15 @@ try {
       echo $nh->setPrice($myEUOrders[0], 0, $max_cost, $EUprice) . PHP_EOL;
       if (isset($myUSOrders[0]['alive']) &&  $myUSOrders[0]['alive'] == 1) {
          sleep(2);
-         echo $nh->setLimit($myUSOrders[0], 1, 0.01) . PHP_EOL;
+         $price = $max_cost*.75;
+         if ($price > $USprice) {
+            $price = $USprice;
+            echo $nh->setLimit($myUSOrders[0], 1, $speed_limit) . PHP_EOL;
+         } else {
+            echo $nh->setLimit($myUSOrders[0], 1, 0.01) . PHP_EOL;
+         }
          sleep(2);
-         echo $nh->setPrice($myUSOrders[0], 1, $max_cost, $max_cost*.75) . PHP_EOL;
+         echo $nh->setPrice($myUSOrders[0], 1, $max_cost, $price) . PHP_EOL;
       }
 
    } else if ($USprice != 0 && isset($myUSOrders[0]['alive']) &&  $myUSOrders[0]['alive'] == 1) {
@@ -129,9 +135,15 @@ try {
       echo $nh->setPrice($myUSOrders[0], 1, $max_cost, $USprice) . PHP_EOL;
       if (isset($myEUOrders[0]['alive']) &&  $myEUOrders[0]['alive'] == 1) {
          sleep(2);
-         echo $nh->setLimit($myEUOrders[0], 0, 0.01) . PHP_EOL;
+         $price = $max_cost*.75;
+         if ($price > $EUprice) {
+            $price = $EUprice;
+            echo $nh->setLimit($myEUOrders[0], 0, $speed_limit) . PHP_EOL;
+         } else {
+            echo $nh->setLimit($myEUOrders[0], 0, 0.01) . PHP_EOL;
+         }
          sleep(2);
-         echo $nh->setPrice($myEUOrders[0], 0, $max_cost, $max_cost*.75) . PHP_EOL;
+         echo $nh->setPrice($myEUOrders[0], 0, $max_cost, $price) . PHP_EOL;
       }
    }
 } catch(Exception $e) {
