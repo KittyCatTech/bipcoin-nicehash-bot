@@ -15,8 +15,8 @@ include 'nicehashAPI.php';
  * Deposit BTC to your account. Get you API Id and Key to put in this script.
  *
  * Add mining pools: https://www.nicehash.com/index.jsp?p=managepools
- * EU >> host: bip.ms-pool.net.ua port: 8888 username: <BipCoin Address> password: x
- * US >> host: pool.democats.org port: 45591 username: <BipCoin Address> passoword: x
+ * EU >> host: bip.ms-pool.net.ua port: 7777 username: <BipCoin Address>.2000000 password: x
+ * US >> host: pool.democats.org port: 45590 username: <BipCoin Address>.2000000 passoword: x
  *
  * Select CryptoNight Algorithm
  * Add one standard order for EU hashing sever and one order for US hasing sever
@@ -142,7 +142,7 @@ try {
    sleep(2);
 
    //----- Update My NiceHash Orders
-   if ( isset($myEUOrders[0]['alive']) &&  $myEUOrders[0]['alive'] == 1 && $EUprice != 0 && $EUprice < $USprice ) {
+   if ( isset($myEUOrders[0]['alive']) &&  $myEUOrders[0]['alive'] == 1 && $EUprice != 0 && ($EUprice < $USprice OR !isset($myUSOrders[0]['alive'])) ) {
       echo "update EU miner\n";
 
       if ($max_cost_per_mh > $EUprice)
