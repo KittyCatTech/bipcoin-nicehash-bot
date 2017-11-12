@@ -21,7 +21,7 @@ class Nicehash {
       static $ch = null;
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-      $url = "https://www.nicehash.com/api?";
+      $url = "https://api.nicehash.com/api?";
       if ($req) { foreach ($req as $rk => $r ) { $url = $url . $rk . '=' . $r . '&'; } }
       curl_setopt($ch, CURLOPT_URL, $url );
       curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
@@ -58,6 +58,9 @@ class Nicehash {
       //echo $var['accepted_speed'] . " " . (boolval($var['accepted_speed']) ? 'true' : 'false') . " ";
       return boolval($var['workers']);
    }
+
+   // public function lowestOrderPrice($orders, $totalhash)
+   // https://api.nicehash.com/api?method=stats.global.current&location=1
 
    public function lowestPrice($orders, $depth) {
 
@@ -142,6 +145,7 @@ class Nicehash {
       $args['order'] = $order['id'];
       sleep(2);
       $result = $this->api_nicehash($args);
+      sleep(10); // extra time for order to cancel and balance to reset
       if(isset($result['result']['error'])) { echo  "Error: " . $result['result']['error'] . PHP_EOL; return; };
       return $result['result']['success'];
    }

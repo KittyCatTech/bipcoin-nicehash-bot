@@ -30,6 +30,7 @@ $NICEHASH_ID = '######';
 $NICEHASH_KEY = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx';
 
 $trade_pair = "BIPBTC";
+$one_coin_unit = 1000000000000;
 
 // CryptoNote pools API
 $bip_pools = [
@@ -47,13 +48,24 @@ try {
    $nh = New Nicehash( $NICEHASH_KEY, $NICEHASH_ID );
 
    $myEUOrders = $nh->myOrders(0);
-   //echo "My Orders: (EU)\n";
-   //print_r($myEUOrders);
+   echo "My Orders: (EU)\n";
+   print_r($myEUOrders);
+
+   if (isset($myEUOrders[0]['alive']) &&  $myEUOrders[0]['alive'] == 1) {
+      $my_current_hashrate = $myEUOrders[0]['accepted_speed'] * 1000000000;
+   } else {
+      $my_current_hashrate = 0;
+   }
 
    $myUSOrders = $nh->myOrders(1);
-   //echo "My Orders: (US)\n";
-   //print_r($myUSOrders);
+   echo "My Orders: (US)\n";
+   print_r($myUSOrders);
  
+   if (isset($myUSOrders[0]['alive']) &&  $myUSOrders[0]['alive'] == 1) {
+      $my_current_hashrate += $myUSOrders[0]['accepted_speed'] * 1000000000;
+   }
+   echo "My Current Hashrate: $my_current_hashrate \n";
+
 
    //----- Get Bid/Ask Prices from Cryptopia
    $ct = New Cryptopia( '', '' );
@@ -73,24 +85,46 @@ try {
 
 
    //---- Get Network Hashrate and block reward from Pool
-   $pool_stats = api_poolStats();
-   echo "Net Dif: " . $pool_stats['network']['difficulty'] . "\n";
+   $all_pool_stats = api_poolStats();
+   $net_hashrate = api_pool_hashrate($all_pool_stats);
+
+
+   $pool_stats = $all_pool_stats[0];
+   $net_dif = $pool_stats['network']['difficulty'];
+   echo "Net Dif: " . $net_dif . "\n";
    echo "coinDifficultyTarget: " . $pool_stats['config']['coinDifficultyTarget'] . "\n";
-   $net_hashrate = $pool_stats['network']['difficulty'] / $pool_stats['config']['coinDifficultyTarget'];
-   echo "Net hashrate: $net_hashrate \n";
-   echo "Reward: " . $pool_stats['network']['reward'] / 1000000000000 . "\n";
-   $bip_daily_reward = $pool_stats['network']['reward'] / 1000000000000 * 30 * 24;
+   $target_hashrate = $net_dif / $pool_stats['config']['coinDifficultyTarget'];
+   echo "Net target hashrate: $target_hashrate \n";
+   $block_reward = $pool_stats['network']['reward'] / $one_coin_unit;
+   echo "Block Reward: " . $block_reward . "\n";
+   //$bip_daily_reward = $block_reward * (3600 / $pool_stats['config']['coinDifficultyTarget']) * 24; //based on target hashrate
+   $bip_daily_reward = $block_reward * (3600 / ($net_dif / $net_hashrate)) * 24; //based on current network hashrate
    echo "Daily Reward: $bip_daily_reward bip " .
-   	$pool_stats['network']['reward'] / 1000000000000 * 30 * 24 * $price . " btc \n";
+   	$bip_daily_reward * $price . " btc \n";
 
-   $my_hash = $net_hashrate  / 1000000 / 4;
-   $speed_limit = number_format((float) $my_hash, 2, '.', '');
-   echo "MH/s to buy: $speed_limit\n";
-   // Took out ($my_hash + $net_hashrate) b/c other miners drop out when you join.
-   $my_rew = $pool_stats['network']['reward'] / 1000000000000 * 30 * 24 * ($my_hash / ($net_hashrate));
-   $max_cost = 0.90 * $my_rew * $price * 1000000 / $my_hash; // 10% for fees and rejected shares
-   echo "Max cost per mH: $max_cost \n";
+   $max_net_hashrate = $net_dif / ($pool_stats['config']['coinDifficultyTarget']);  // 120 sec target
+   echo "max_net_hashrate: $max_net_hashrate \n";
+   $min_net_hashrate = $net_dif / ($pool_stats['config']['coinDifficultyTarget'] * 30); // 30 times the 2 min target i.e. 60 min
+   echo "min_net_hashrate: $min_net_hashrate \n";
 
+   $net_hashrate = $net_hashrate - $my_current_hashrate;
+   if ($net_hashrate < 0) $net_hashrate = 0;
+   echo "Network Hashrate minus my hashrate: $net_hashrate" . PHP_EOL;
+
+   $max_cost_per_mh = 0.90 * $block_reward * $price * 1000000 * 3600 * 24 / $net_dif; // 10% for fees and rejected shares
+   echo "Max cost: $max_cost_per_mh \n";
+
+   if ($min_net_hashrate - $net_hashrate < 0 ) 
+      $my_min_hashrate = 0;
+   else
+      $my_min_hashrate = ceil(($min_net_hashrate - $net_hashrate)/1000000 * 100) /100; //round up to 2 decimal places
+   echo "my min hashrate: $my_min_hashrate \n";
+
+   $my_max_hashrate = number_format((float) ($max_net_hashrate - $net_hashrate)/1000000, 2, '.', '');
+   $half_max_net_hashrate = number_format((float) ($max_net_hashrate/2)/1000000, 2, '.', '');
+   if($my_max_hashrate > $half_max_net_hashrate)
+      $my_max_hashrate = $half_max_net_hashrate;
+   echo "my max hashrate: $my_max_hashrate \n";
 
    //----- Get NiceHash Order Book
    $orders = $nh->getOrders(0);
@@ -110,40 +144,57 @@ try {
    //----- Update My NiceHash Orders
    if ( isset($myEUOrders[0]['alive']) &&  $myEUOrders[0]['alive'] == 1 && $EUprice != 0 && $EUprice < $USprice ) {
       echo "update EU miner\n";
+
+      if ($max_cost_per_mh > $EUprice)
+         $speed_limit = $my_max_hashrate;
+      else if ($my_min_hashrate > 0.01)
+         $speed_limit = $my_min_hashrate;
+      else
+         $speed_limit = 0.01;
+
       echo $nh->setLimit($myEUOrders[0], 0, $speed_limit) . PHP_EOL;
-      if ($EUprice > $max_cost) $EUprice = $max_cost;
+
+      if($my_min_hashrate > 0 && $max_cost_per_mh < $EUprice) $max_cost_per_mh = $EUprice; // raise the price you are willing to pay when the net hashrate is below the min hashrate
+
+      if ($EUprice > $max_cost_per_mh) $EUprice = $max_cost_per_mh;
       sleep(2);
-      echo $nh->setPrice($myEUOrders[0], 0, $max_cost, $EUprice) . PHP_EOL;
+      echo $nh->setPrice($myEUOrders[0], 0, $max_cost_per_mh, $EUprice) . PHP_EOL;
       if (isset($myUSOrders[0]['alive']) &&  $myUSOrders[0]['alive'] == 1) {
          sleep(2);
-         $price = $max_cost*.75;
+         $price = $max_cost_per_mh*.75;
          if ($price > $USprice) {
             $price = $USprice;
-            echo $nh->setLimit($myUSOrders[0], 1, $speed_limit) . PHP_EOL;
-         } else {
-            echo $nh->setLimit($myUSOrders[0], 1, 0.01) . PHP_EOL;
          }
+         echo $nh->setLimit($myUSOrders[0], 1, 0.01) . PHP_EOL;
          sleep(2);
-         echo $nh->setPrice($myUSOrders[0], 1, $max_cost, $price) . PHP_EOL;
+         echo $nh->setPrice($myUSOrders[0], 1, $max_cost_per_mh, $price) . PHP_EOL;
       }
 
    } else if ($USprice != 0 && isset($myUSOrders[0]['alive']) &&  $myUSOrders[0]['alive'] == 1) {
       echo "update US miner\n";
+
+      if ($max_cost_per_mh > $USprice)
+         $speed_limit = $my_max_hashrate;
+      else if ($my_min_hashrate > 0.01)
+         $speed_limit = $my_min_hashrate;
+      else
+         $speed_limit = 0.01;
       echo $nh->setLimit($myUSOrders[0], 1, $speed_limit) . PHP_EOL;
-      if ($USprice > $max_cost) $USprice = $max_cost;
+
+      if($my_min_hashrate > 0 && $max_cost_per_mh < $USprice) $max_cost_per_mh = $USprice; // raise the price you are willing to pay when the net hashrate is below the min hashrate
+
+      if ($USprice > $max_cost_per_mh) $USprice = $max_cost_per_mh;
       sleep(2);
-      echo $nh->setPrice($myUSOrders[0], 1, $max_cost, $USprice) . PHP_EOL;
+      echo $nh->setPrice($myUSOrders[0], 1, $max_cost_per_mh, $USprice) . PHP_EOL;
       if (isset($myEUOrders[0]['alive']) &&  $myEUOrders[0]['alive'] == 1) {
          sleep(2);
-         $price = $max_cost*.75;
+         $price = $max_cost_per_mh*.75;
          if ($price > $EUprice) {
             $price = $EUprice;
-            echo $nh->setLimit($myEUOrders[0], 0, $speed_limit) . PHP_EOL;
-         } else {
-            echo $nh->setLimit($myEUOrders[0], 0, 0.01) . PHP_EOL;
          }
+         echo $nh->setLimit($myEUOrders[0], 0, 0.01) . PHP_EOL;
          sleep(2);
-         echo $nh->setPrice($myEUOrders[0], 0, $max_cost, $price) . PHP_EOL;
+         echo $nh->setPrice($myEUOrders[0], 0, $max_cost_per_mh, $price) . PHP_EOL;
       }
    }
 } catch(Exception $e) {
@@ -162,10 +213,21 @@ function api_poolStats() {
    	curl_setopt($ch, CURLOPT_URL, $url );
    	$res = curl_exec($ch);
       if ($res === false) echo "Can't connect to pool: " . $pool[0] . " Error:" . curl_error($ch) . PHP_EOL;      
-      else break;
+      else $results[] = json_decode($res, true);
    }
-	if ($res === false) throw new Exception('Could not connect to any mining pools');
-	return json_decode($res, true);
+	if ($results === false) throw new Exception('Could not connect to any mining pools');
+	return $results;
+}
+
+function api_pool_hashrate($pool_stats) {
+   $net_hashrate = 0;
+   foreach ($pool_stats as $pool) {
+      $pool_hashrate = $pool['pool']['hashrate'];
+      echo "Pool Hashrate: $pool_hashrate" . PHP_EOL;
+      $net_hashrate += $pool_hashrate;
+   }
+   echo "Network Hashrate: $net_hashrate" . PHP_EOL;
+   return $net_hashrate;
 }
 
 ?>
